@@ -10,13 +10,13 @@ const client = axios.create({
 export async function fetchHotNews(): Promise<NewsItem[]> {
   try {
     const { data } = await client.get("/news/hot");
-    return (data.data || []).map((item: any) => ({
-      id: item.id || String(item.timestamp),
+    return (data.data?.list || data.data || []).map((item: any) => ({
+      id: item.id,
       title: item.title,
-      summary: item.summary || item.content || "",
-      timestamp: item.timestamp || Date.now(),
-      coins: item.coins || item.symbols || [],
-      sentiment: item.sentiment,
+      summary: item.content || "",
+      timestamp: parseInt(item.release_time) || Date.now(),
+      coins: extractCoins(item.title + " " + item.content),
+      sentiment: undefined,
     }));
   } catch (err: any) {
     console.error("[SoSoValue] fetchHotNews error:", err.message);
@@ -32,4 +32,9 @@ export async function fetchIndexSnapshot(ticker: string) {
     console.error(`[SoSoValue] fetchIndexSnapshot(${ticker}) error:`, err.message);
     return null;
   }
+}
+
+function extractCoins(text: string): string[] {
+  const known = ["BTC", "ETH", "SOL", "BNB", "UNI", "COMP", "PEPE", "ICX"];
+  return known.filter((coin) => text.toUpperCase().includes(coin));
 }
